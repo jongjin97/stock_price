@@ -24,7 +24,10 @@ LangGraph와 Text-to-SQL을 활용하여 뉴스와 재무 데이터를 종합적
 
 본 시스템은 LangGraph로 설계된 다음과 같은 순서로 작동합니다.
 
-[시작] 재무제표 조회 (fetch_financials): yfinance를 통해 분석 대상의 최신 4분기 재무제표(재무상태표, 손익계산서, 현금흐름표)를 가져옵니다.
+[시작] 새로운 뉴스 조회 및 DB 업데이트 (crawl_and_update_db_node): 크롤링을 통해 최신 뉴스 목록을 가져옵니다. DB의 뉴스를 조회하고
+새로운 뉴스는 상세정보를 수집, DB에 저장합니다.
+
+→ 재무제표 조회 (fetch_financials): yfinance를 통해 분석 대상의 최신 4분기 재무제표(재무상태표, 손익계산서, 현금흐름표)를 가져옵니다.
 
 → DB 뉴스 확인 및 요약 (fetch_db_news): 내부 데이터베이스에서 최신 뉴스 3건을 조회합니다. 가장 최신 뉴스는 원문을, 이전 2건은 AI를 통해 요약합니다.
 
@@ -51,6 +54,9 @@ ai_stock_analyzer/
 │ ├── database.py # DB 연결 및 초기화
 │ ├── models.py # SQLAlchemy DB 테이블 모델
 │ │
+| ├── service # 뉴스의 크롤링, db 패키지
+| | └──news_service.py
+| |
 │ ├── graph/ # LangGraph 워크플로우 패키지
 │ │ ├── state.py
 │ │ ├── nodes.py
@@ -134,3 +140,17 @@ python main.py
 다중 종목 분석: 여러 주식 종목을 동시에 또는 주기적으로 분석하는 스케줄링 기능 추가 (APScheduler, Celery 등)
 
 수집기 프로젝트 분리: 데이터 수집 파이프라인을 별도의 프로젝트로 분리하여 시스템 안정성 및 확장성 확보
+
+## 📝 8. 변경 이력 (Changelog)
+
+### 2024-07-29
+
+- **초기 버전 릴리즈**: LangGraph 기반 AI 주식 뉴스 분석기 프로젝트 공개
+
+### 2024-07-30
+
+- **뉴스 크롤링 및 DB 저장 노드 추가**:
+  - `fetch_latest_news` 노드 추가: 웹에서 최신 뉴스를 크롤링합니다.
+  - `filter_and_save_news` 노드 추가: 크롤링된 뉴스 중 DB에 없는 뉴스를 필터링하여 저장합니다.
+  - LangGraph 워크플로우 시작 노드 변경: `fetch_financials` 대신 `fetch_latest_news`로 시작하도록 수정.
+  - 전체 워크플로우: `fetch_latest_news` → `filter_and_save_news` → `fetch_financials` → `fetch_db_news` → `generate_answer`
