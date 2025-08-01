@@ -10,7 +10,7 @@ setup_logging()
 # 로거 객체 생성
 logger = logging.getLogger(__name__)
 
-def run_analysis(question: str):
+def run_analysis(symbol: str):
     """
     주어진 질문에 대해 전체 분석 워크플로우를 실행합니다.
 
@@ -24,7 +24,8 @@ def run_analysis(question: str):
         # 3. 그래프 실행을 위한 초기 상태를 정의합니다.
         # 모든 값은 빈 문자열로 시작하며, 각 노드를 거치면서 채워집니다.
         initial_state = {
-            "question": question,
+            "question": symbol,
+            "crawled_urls": [],
             "db_result": "",
             "balance_sheet": "",
             "income_statement": "",
@@ -32,7 +33,7 @@ def run_analysis(question: str):
             "final_answer": ""
         }
 
-        logger.info(f"===== '{question}'에 대한 분석 워크플로우 시작 =====")
+        logger.info(f"===== '{symbol}'에 대한 분석 워크플로우 시작 =====")
         
         # 4. 그래프를 스트리밍 방식으로 실행하고 각 단계의 결과를 로깅합니다.
         final_state = None
@@ -48,7 +49,7 @@ def run_analysis(question: str):
             final_answer = final_state.get("generate_answer", {}).get('final_answer', "최종 답변을 생성하지 못했습니다.")
             logger.info("===== 분석 워크플로우 종료 =====")
             print("\n" + "="*50)
-            print("[ 최종 분석 보고서 ]")
+            print("[ {symbol}최종 분석 보고서 ]")
             print("="*50)
             print(final_answer)
             print("="*50)
@@ -64,5 +65,6 @@ if __name__ == "__main__":
     
     # 6. 분석 실행
     # 분석하고 싶은 질문을 여기에 입력하세요.
-    analysis_question = "Apple(AAPL)의 최신 뉴스와 재무 상태를 기반으로 향후 주가 전망을 분석해줘."
+    analysis_question = "AAPL"
     run_analysis(analysis_question)
+    

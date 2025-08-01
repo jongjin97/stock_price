@@ -2,8 +2,10 @@ import logging
 from .state import GraphState
 from stock_analyzer.tools.database_tools import db_query_tool
 from stock_analyzer.tools.financial_tools import financial_statement_tool
+from stock_analyzer.tools.news_crawler_tools import stock_news_url_crawler_tool
 from langchain_openai import ChatOpenAI
 from config import settings
+from stock_analyzer.service import news_service
 
 logger = logging.getLogger(__name__)
 llm = ChatOpenAI(
@@ -17,6 +19,53 @@ summary_llm = ChatOpenAI(
     temperature=0,
     api_key=settings.OPENAI_API_KEY
 )
+
+
+def crawl_and_update_db_node(state: GraphState):
+    """
+    웹에서 최신 뉴스 URL을 크롤링하고, DB에 없는 뉴스를 찾아 저장합니다.
+    """
+    logger.info("--- 노드 실행: 웹 뉴스 크롤링 및 DB 업데이트 ---")
+    symbol = state['question']
+    
+    # 웹에서 최신 뉴스 URL 목록 가져오기
+    lastest_urls_from_web = stock_news_url_crawler_tool.invoke(symbol)
+    if not lastest_urls_from_web:
+        logger.warning(f"'{symbol}'에 대한 새로운 뉴스 URL을 크롤링하지 못했습니다.")
+        return state
+    
+    state['crawled_urls'] = lastest_urls_from_web
+
+    # DB에 이미 저장된 URL 목록 가져오기
+    try:
+        urls_in_db = news_service.get_urls_by_symbol(symbol)
+        logger.info(f"'{symbol}'의 기존 뉴스 URL 목록을 DB에서 조회했습니다.")
+    except Exception as e:
+        logger.error(f"DB에서 URL 목록 조회 중 오류 발생: {e}", exc_info=True)
+        urls_in_db = set()
+
+    # 새로운 뉴스 URL만 필터링
+    news_urls = [url for url in lastest_urls_from_web if url not in urls_in_db]
+
+    if not news_urls:
+        logger.info("새로운 뉴스가 없습니다. DB 업데이트를 건너뜁니다.")
+        return state
+    
+    logger.info(f"{len(news_urls)}개의 새로운 뉴스를 반견했습니다. DB에 저장합니다.")
+
+    # 새로운 뉴스의 상세 내용 크롤링
+    news_dict_list = [news_service.crawl_full_content(url) for url in news_urls]
+
+    # DB에 데이터 삽입
+    try:
+        news_service.save_news_articles(news_dict_list, symbol)
+        logger.info(f"{len(news_dict_list)}개의 새로운 뉴스를 DB에 저장했습니다.")
+    except Exception as e:
+        logger.error(f"DB에 새로운 뉴스를 저장하는 중 오류 발생: {e}", exc_info=True)
+
+    return state
+
+
 
 def fetch_db_news_node(state: GraphState):
     """
@@ -42,7 +91,7 @@ def fetch_db_news_node(state: GraphState):
             return state
 
         # 3. 개별 기사로 분리
-        articles = raw_news_text.split('---ARTICLE SEPARATOR---')
+        articles = raw_news_text['output'].split('---ARTICLE SEPARATOR---')
         articles = [article.strip() for article in articles if article.strip()]
 
         if not articles:

@@ -1,4 +1,4 @@
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, List
 import operator
 
 class GraphState(TypedDict):
@@ -8,6 +8,7 @@ class GraphState(TypedDict):
 
     Attributes:
         question: 사용자의 원본 질문
+        crawled_urls: 크롤링된 뉴스 URL 목록
         db_result: 데이터베이스 검색 결과
         income_statement: 재무상태표 결과
         balance_sheet: 손익계산서 결과
@@ -15,6 +16,7 @@ class GraphState(TypedDict):
         final_answer: 최종 생성된 분석 답변
     """
     question: str
+    crawled_urls: List[str]
     db_result: str
     income_statement: str
     balance_sheet: str

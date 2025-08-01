@@ -2,6 +2,7 @@ from sqlalchemy import (
     create_engine, Column, Integer, String, Text, DateTime,
     ForeignKey, BigInteger, Enum as SQLAlchemyEnum, DECIMAL
 )
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import relationship, declarative_base
 import enum
 
@@ -19,7 +20,7 @@ class Stock(Base):
     주식의 기본 정보를 저장하는 테이블 모델.
     SQL 스키마에 맞춰 stock_id를 기본 키로 사용합니다.
     """
-    __tablename__ = 'stocks'
+    __tablename__ = 'stock'
     stock_id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(6), nullable=False, unique=True)
     exchange = Column(String(6), nullable=False)
@@ -35,7 +36,7 @@ class News(Base):
     __tablename__ = 'news'
     news_id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(300), nullable=False)
-    content = Column(Text, nullable=False) # 긴 텍스트는 Text 타입이 더 유연합니다.
+    content = Column(LONGTEXT, nullable=False) # 긴 텍스트는 Text 타입이 더 유연합니다.
     url = Column(String(300), nullable=False, unique=True)
     stock_id = Column(Integer, ForeignKey("stock.stock_id"), nullable=False)
     news_upload_time = Column(DateTime, default=None)

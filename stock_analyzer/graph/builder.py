@@ -4,7 +4,8 @@ from .state import GraphState
 from .nodes import (
     fetch_db_news_node,
     fetch_financials_node,
-    generate_final_answer_node
+    generate_final_answer_node,
+    crawl_and_update_db_node
 )
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ def get_graph_app():
 
     # 1. 노드(작업 단위) 등록
     logger.debug("그래프 노드를 등록합니다.")
+    workflow.add_node("crawl_and_update_db", crawl_and_update_db_node)
     workflow.add_node("fetch_financials", fetch_financials_node)
     workflow.add_node("fetch_db_news", fetch_db_news_node)
     workflow.add_node("generate_answer", generate_final_answer_node)
@@ -27,9 +29,10 @@ def get_graph_app():
     logger.debug("그래프 엣지를 연결합니다.")
     
     # 시작점 설정: 재무제표 조회부터 시작
-    workflow.set_entry_point("fetch_financials")
+    workflow.set_entry_point("crawl_and_update_db")
     
     # 일반 엣지 연결
+    workflow.add_edge("crawl_and_update_db", "fetch_financials")
     workflow.add_edge("fetch_financials", "fetch_db_news")
     workflow.add_edge("fetch_db_news", "generate_answer")
     workflow.add_edge("generate_answer", END) # 최종 답변 생성 후 워크플로우 종료
