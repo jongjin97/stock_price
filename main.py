@@ -49,7 +49,7 @@ def run_analysis(symbol: str):
             final_answer = final_state.get("generate_answer", {}).get('final_answer', "최종 답변을 생성하지 못했습니다.")
             logger.info("===== 분석 워크플로우 종료 =====")
             print("\n" + "="*50)
-            print("[ {symbol}최종 분석 보고서 ]")
+            print(f"[ {symbol} 최종 분석 보고서 ]")
             print("="*50)
             print(final_answer)
             print("="*50)
