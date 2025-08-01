@@ -26,8 +26,13 @@ def get_urls_by_symbol(symbol: str) -> Set[str]:
         # symbole을 사용하여 stock_id를 찾습니다.
         stock = db.query(Stock).filter(Stock.symbol == symbol).first()
         if not stock:
-            logger.warning(f"DB에 '{symbol}' 심볼이 존재하지 않아 URL을 조회할 수 없습니다.")
-            return urls
+            logger.warning(f"DB에 '{symbol}' 심볼이 존재하지 않아 새로 생성합니다. (exchange: NONE)")
+            # exchange 정보가 없으므로 'NONE'으로 기본값 설정
+            new_stock = Stock(symbol=symbol, exchange='NONE')
+            db.add(new_stock)
+            db.commit()
+            db.refresh(new_stock) # 새로 생성된 객체의 정보(stock_id 등)를 다시 로드
+            stock = new_stock
         
         # 찾은 stock_id를 사용하여 모든 뉴스 URL을 조회합니다.
         results = db.query(News.url).filter(News.stock_id == stock.stock_id).all()
