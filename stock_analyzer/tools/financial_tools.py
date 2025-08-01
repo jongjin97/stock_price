@@ -23,9 +23,9 @@ def get_financial_statements(symbol: str) -> Dict[str, str]:
         ticker = yf.Ticker(symbol)
 
         # 각 재무제표의 최근 4분기 데이터 가져오기
-        income_stmt_df = ticker.income_stmt.iloc[:, :4]
-        balance_sheet_df = ticker.balance_sheet.iloc[:, :4]
-        cash_flow_df = ticker.cashflow.iloc[:, :4]
+        income_stmt_df = ticker.get_income_stmt(freq="quarterly").iloc[:, :4]
+        balance_sheet_df = ticker.get_balance_sheet(freq="quarterly").iloc[:, :4]
+        cash_flow_df = ticker.get_cashflow(freq="quarterly").iloc[:, :4]
 
         logger.info(f"'{symbol}' 데이터 수집 완료. 문자열로 변환합니다.")
 
